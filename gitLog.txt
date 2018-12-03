@@ -1,0 +1,79 @@
+commit 006ebf410921ff72eb29bf0ef3ba2caf51b04879 (HEAD -> master, origin/master, origin/HEAD)
+Author: Alexander Daigre <alex@Alexanders-MacBook-Pro.local>
+Date:   Wed Nov 14 23:29:17 2018 -0600
+commit 006ebf410921ff72eb29bf0ef3ba2caf51b04879 (HEAD -> master, origin/master
+, origin/HEAD)
+Author: Alexander Daigre <alex@Alexanders-MacBook-Pro.local>
+commit 006ebf410921ff72eb29bf0ef3ba2caf51b04879 (HEAD -> master, origin/master
+, origin/HEAD)
+Author: Alexander Daigre <alex@Alexanders-MacBook-Pro.local>
+Date:   Wed Nov 14 23:29:17 2018 -0600
+
+    readme created
+
+commit b8904f00432a85d5aac19919188f69beb38235c6
+Author: Alexander Daigre <alex@Alexanders-MacBook-Pro.local>
+Date:   Wed Nov 14 23:15:55 2018 -0600
+
+    server updates
+
+commit b511f3dbc6dfa159fad0f15c6ec0d54b12a606b6
+Author: Alexander Daigre <alex@Alexanders-MacBook-Pro.local>
+Date:   Wed Nov 14 23:10:18 2018 -0600
+
+    server updates
+
+commit 37e819ad956f36e15e021f847679757cebd5d7ba
+Author: Alexander Daigre <alex@Alexanders-MacBook-Pro.local>
+Date:   Wed Nov 14 23:04:21 2018 -0600
+
+    transfering to server
+
+commit 426796f1b1cd094583f2dba791f6a3d5f71182b8
+Author: Alexander Daigre <alex@Alexanders-MacBook-Pro.local>
+Date:   Wed Nov 14 22:34:58 2018 -0600
+
+    working on bankers
+
+commit bb00cb5cf02845a90d4ac8065600f000282269bc
+Author: Alexander Daigre <alex@Alexanders-MacBook-Pro.local>
+Date:   Wed Nov 14 22:34:00 2018 -0600
+
+    working on bankers
+
+commit 4af993cac79620b77a1a9cd91ef222897e34ec9b
+Author: Alexander Daigre <alex@Alexanders-MacBook-Pro.local>
+Date:   Wed Nov 14 21:26:53 2018 -0600
+
+    working on genrating requests still
+
+commit 57a83c107ca14c002ac1eee758c621c96120d696
+Author: Alexander Daigre <alex@Alexanders-MacBook-Pro.local>
+Date:   Wed Nov 14 19:22:44 2018 -0600
+
+    granting and requests more fleshed out, getting bus error.
+
+commit 63532ae287c16d4acac059a43d17405d2ce391c6
+Author: Alexander Daigre <alex@Alexanders-MacBook-Pro.local>
+Date:   Wed Nov 14 11:35:04 2018 -0600
+
+    working msg queue
+
+commit c4a86d6b67617cc6f2ea84575be2d986624a7cdd
+Author: Alexander Daigre <alex@Alexanders-MacBook-Pro.local>
+Date:   Tue Nov 13 19:51:00 2018 -0600
+
+    setting up msg queues
+
+commit be32eddf1f80b56703f0c38f7618fa92adc9fd35
+Author: Alexander Daigre <alex@Alexanders-MacBook-Pro.local>
+Date:   Tue Nov 13 04:31:28 2018 -0600
+
+    idk, been working on this a bunch without commiting it. on step 3 in the directions.
+
+commit f6dcd1bbf8e600411dea121e4fd7d8bec4de3afb
+Author: Alexander Daigre <alex@Alexanders-MBP.dhcp.umsl.edu>
+Date:   Mon Nov 12 15:33:34 2018 -0600
+
+    first commit
+(END)
