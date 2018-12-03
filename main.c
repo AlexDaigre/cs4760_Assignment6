@@ -13,88 +13,39 @@
 #include <sys/ipc.h> 
 #include <sys/msg.h>
 
-struct mesg_buffer { 
-    long mtype; 
-    char mtext[100]; 
-} message; 
-
 void childClosedSignal(int sig);
 int closeChild();
 void closeProgramSignal(int sig);
 void closeProgram();
 
-void reciveMessages();
-int checkGrant(int requestedResources[]);
-
 void setupOutputFile();
 
-void createProcesses();
 void advanceTime();
+
+void createProcesses();
 
 void setupSharedClock();
 #define CLOCKVAR 0
-#define SHMNAME "/tmp/daigreTmp99944"
-
+#define SHMNAME "/tmp/daigreTmp99999"
+int clockShmId;
+int* clockShmPtr;
 
 void setupMsgQueue();
 #define QUEUEVAR 0
-#define QUEUENAME "/tmp/daigreTmp99955"
+#define QUEUENAME "/tmp/daigreTmp99998"
 int msgQueueId;
 
-int clockShmId;
-int* clockShmPtr;
+struct mesg_buffer { 
+    long mtype; 
+    char mtext[100]; 
+} message; 
+
 FILE* outputFile;
 
 int currentProcesses;
-#define maxProcesses 18
-#define numberOfResources 20
-
 pid_t openProcesses[18] = {0};
-pid_t blockedProcesses[18] = {0};
+int maxProcesses;
 
-int resourceLimts[numberOfResources] = {
-    10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10
-};
-int resourceAllocations[18][numberOfResources] = {
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-};
-int resourceMaxes[18][numberOfResources] = {
-    {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-    {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-    {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-    {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-    {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-    {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-    {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-    {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-    {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-    {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-    {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-    {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-    {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-    {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-    {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-    {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-    {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-    {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3}
-};
 
 int main (int argc, char *argv[]) {
     srand ( time(NULL) );
@@ -105,6 +56,7 @@ int main (int argc, char *argv[]) {
     //set default values and get command line inputs
     int c;
     int maxRunTime = 20;
+    int maxProcesses = 18;
     char* logFile = "logFile.txt";
 
     while ((c = getopt (argc, argv, "hs:l:t:")) != -1){
@@ -112,6 +64,13 @@ int main (int argc, char *argv[]) {
             case 'h':
                 printf("Options:\n-h: Help\n-l: The given argument(string) specifies the neame of the logfile.\n-t: The given number(int) specifies the max amount of time the program will run for.\n");
                 exit(0);
+                break;
+            case 's':
+                if (atoi(optarg) <= 0 || atoi(optarg) > 18){
+                    maxProcesses = 18;
+                } else {
+                    maxProcesses = atoi(optarg);
+                }
                 break;
             case 'l':
                 logFile = optarg;
@@ -144,13 +103,10 @@ int main (int argc, char *argv[]) {
 
     while(clockShmPtr[0] < 80){
     // while(1==1){
-        // printf("looping!\n");
         if ((currentProcesses < maxProcesses)){
-            // printf("Creating process!\n");
             createProcesses();
         }
         advanceTime();
-        reciveMessages();
     }
 
     closeProgram();
@@ -169,8 +125,6 @@ int closeChild(){
                 openProcesses[i] = 0;
             }
         }
-        // printf("closing child %d\n", closedChild);
-        // fprintf(outputFile, "closing child %d\n", closedChild);
         currentProcesses--;
     }
     return closedChild;
@@ -245,7 +199,6 @@ void advanceTime(){
 }
 
 void createProcesses(){
-    // printf("creating child\n");
     int i;
     int openSpace;
     for(i = 0; i < 18; i++){
@@ -254,35 +207,10 @@ void createProcesses(){
             break;
         }
     }
-    char alocatedResourcesString[40];
-    sprintf(
-        alocatedResourcesString, 
-        "%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d", 
-        resourceMaxes[openSpace][0], 
-        resourceMaxes[openSpace][1], 
-        resourceMaxes[openSpace][2], 
-        resourceMaxes[openSpace][3], 
-        resourceMaxes[openSpace][4], 
-        resourceMaxes[openSpace][5], 
-        resourceMaxes[openSpace][6], 
-        resourceMaxes[openSpace][7], 
-        resourceMaxes[openSpace][8], 
-        resourceMaxes[openSpace][9], 
-        resourceMaxes[openSpace][10], 
-        resourceMaxes[openSpace][11], 
-        resourceMaxes[openSpace][12], 
-        resourceMaxes[openSpace][13], 
-        resourceMaxes[openSpace][14], 
-        resourceMaxes[openSpace][15], 
-        resourceMaxes[openSpace][16], 
-        resourceMaxes[openSpace][17], 
-        resourceMaxes[openSpace][18], 
-        resourceMaxes[openSpace][19]
-    );
     pid_t newForkPid;
     newForkPid = fork();
     if (newForkPid == 0){
-        execlp("./worker","./worker", alocatedResourcesString, NULL);
+        execlp("./worker","./worker", NULL);
         fprintf(stderr, "Failed to exec worker!\n");
         fprintf(outputFile, "Failed to exec worker!\n");
         exit(1);
@@ -309,117 +237,4 @@ void setupMsgQueue(){
         printf("Error: %d\n", errno);
         exit(1);
     }
-}
-
-void reciveMessages(){
-    int msgRecived  = msgrcv(msgQueueId, &message, sizeof(message), 1, IPC_NOWAIT);
-    if (msgRecived == -1){
-        return;
-    }
-
-    char* requestedResourcesString = message.mtext;
-    char* stringElement = strtok(requestedResourcesString, "/");
-    int requestedResources[20];
-
-
-    pid_t requestingPid = atoi(stringElement);
-    stringElement = strtok (NULL, "/");
-
-    int i = 0;
-    while (stringElement != NULL){
-        requestedResources[i++] = atoi(stringElement);
-        stringElement = strtok (NULL, "/");
-    }
-
-    printf("Parent: Recived msg from child: %d ", requestingPid);
-    printf("requesting resources: {");
-    for (i = 0; i < 20; ++i) {
-        printf("%d,", requestedResources[i]);
-    }
-    printf("}\n");
-
-    int j;
-    int processLocation;
-    for(j = 0; j < 18; j++){
-        if (openProcesses[j] == requestingPid){
-            processLocation = j;
-            break;
-        }
-    }
-
-    int grantOkay = checkGrant(requestedResources);
-
-    if (grantOkay == 1){
-        message.mtype = requestingPid;
-        int n;
-        for(n = 0; n < 20; n++){
-            resourceAllocations[processLocation][n] += requestedResources[n];
-        }
-        int msgSent = msgsnd(msgQueueId, &message, sizeof(message), 0);
-        if (msgSent < 0){
-            printf("Parrent: failed to send message.\n");
-        }
-        printf("Parent: sent msg to child %d\n", requestingPid);
-    } else {
-        int n;
-        int openSpace;
-        for(n = 0; n < 18; n++){
-            if (blockedProcesses[n] == 0){
-                blockedProcesses[n] = requestingPid;
-                printf("Parrent: added process %d to blocked queue.\n", requestingPid);
-                break;
-            }
-        }
-    }
-}
-
-int checkGrant(int requestedResources[]){
-    int avalibleResources[numberOfResources];
-    int needResources[18][numberOfResources];
-
-    int i;
-    for (i = 0; i < numberOfResources; i++){
-        avalibleResources[i] = resourceLimts[i];
-    }
-
-
-    int j;
-    for (i = 0; i < 18; i++){
-        for (j = 0; j < numberOfResources; j++){
-            //find number of avalible resources in system
-            avalibleResources[j] -= resourceAllocations[i][j];   
-            //find need of each process
-            needResources[i][j] = resourceMaxes[i][j] - resourceAllocations[i][j];
-        }
-    }
-
-    //Bankers algorythim
-    // int processesCompleted[18];
-    // int newProcessCanComplete = 0;
-    // int grantOkay = 1;
-    // int n = 0;
-    // while(){
-    //     for (i = 0; i < 18; i++){
-    //         int resourcesAvalibleForProcess = 1;
-    //         for (j = 0; j < numberOfResources; j++){
-    //             if (needResources[i][j] > avalibleResources[j]){
-    //                 resourcesAvalibleForProcess = 0;
-    //             }
-    //         }
-    //         if (resourcesAvalibleForProcess == 1){
-    //             newProcessCanComplete = 1;
-    //         }
-    //     }
-    //     if (newProcessCanComplete > 0){
-
-    //     }
-    // }
-
-    int grantOkay = 1;
-    for(i=0; i<20; i++){
-        if (requestedResources[i] > avalibleResources[i]){
-            grantOkay = 0;
-        }
-    }
-    return grantOkay;
 }
