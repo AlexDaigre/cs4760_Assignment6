@@ -28,9 +28,11 @@ void setupMsgQueue();
 int msgQueueId;
 
 struct mesg_buffer { 
-    long mtype; 
-    char mtext[100]; 
-} message; 
+    long mtype;
+    pid_t pid;
+    int location;
+    char readOrWrite;
+} message;
 
 int main (int argc, char *argv[]) {
     signal(SIGINT, closeProgramSignal);
@@ -39,11 +41,23 @@ int main (int argc, char *argv[]) {
     setupSharedClock();
     setupMsgQueue();
 
-    for(;;){
-        
-    }
+    // for(;;){
+        message.mtype = 1;
+        message.readOrWrite = (rand() % 2) == 0 ? 'r' : 'w';
+        message.location = rand() % 32;
+        message.pid = getpid();
+        int msgSent = msgsnd(msgQueueId, &message, sizeof(message), 0);
+        if (msgSent < 0){
+            printf("Child %d: failed to send message.\n", getpid());
+            printf("Error: %d\n", errno);
+            closeProgram();
+        }
 
-    printf("Child %d: an error has occured.", getpid());
+        msgrcv(msgQueueId, &message, sizeof(message), getpid(), 0);
+    // }
+
+    // printf("Child %d: an error has occured.", getpid());
+    printf("Child %d: Recived permission to close\n.", getpid());
     closeProgram();
 }
 

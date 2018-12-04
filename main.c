@@ -35,16 +35,31 @@ void setupMsgQueue();
 #define QUEUENAME "/tmp/daigreTmp99998"
 int msgQueueId;
 
+void reciveMessages();
+
 struct mesg_buffer { 
-    long mtype; 
-    char mtext[100]; 
-} message; 
+    long mtype;
+    pid_t pid;
+    int location;
+    char readOrWrite;
+} message;
 
 FILE* outputFile;
 
 int currentProcesses;
 pid_t openProcesses[18] = {0};
 int maxProcesses;
+
+struct memoryBlock {
+    int inFrame;
+    int refrenceBit;
+    int dirtyBit;
+    int readBit;
+    int writeBit;
+};
+
+int pages[18][32];
+struct memoryBlock frames[256];
 
 
 int main (int argc, char *argv[]) {
@@ -107,6 +122,7 @@ int main (int argc, char *argv[]) {
             createProcesses();
         }
         advanceTime();
+        reciveMessages();
     }
 
     closeProgram();
@@ -215,7 +231,7 @@ void createProcesses(){
         fprintf(outputFile, "Failed to exec worker!\n");
         exit(1);
     }
-    openProcesses[i] = newForkPid;
+    openProcesses[openSpace] = newForkPid;
     printf("Execed child %d\n", newForkPid);
     fprintf(outputFile, "Execed child %d\n", newForkPid);
     currentProcesses++;
@@ -237,4 +253,32 @@ void setupMsgQueue(){
         printf("Error: %d\n", errno);
         exit(1);
     }
+}
+
+void reciveMessages(){
+    int msgRecived  = msgrcv(msgQueueId, &message, sizeof(message), 1, IPC_NOWAIT);
+    if (msgRecived == -1){
+        return;
+    }
+
+    pid_t requestingPid = message.pid;
+
+    printf("Parent: Recived msg from child: %d\n", requestingPid);
+
+    int j;
+    int processLocation;
+    for(j = 0; j < 18; j++){
+        if (openProcesses[j] == requestingPid){
+            processLocation = j;
+            break;
+        }
+    }
+
+    message.mtype = requestingPid;
+
+    int msgSent = msgsnd(msgQueueId, &message, sizeof(message), 0);
+    if (msgSent < 0){
+        printf("Parrent: failed to send message.\n");
+    }
+    printf("Parent: sent msg to child %d\n", requestingPid);
 }
