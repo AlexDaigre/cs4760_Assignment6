@@ -48,17 +48,19 @@ FILE* outputFile;
 
 int currentProcesses;
 pid_t openProcesses[18] = {0};
+pid_t blockedProcesses[18] = {0};
 int maxProcesses;
 
 struct memoryBlock {
-    int inFrame;
+    int pid;
     int refrenceBit;
     int dirtyBit;
     int readBit;
     int writeBit;
 };
 
-int pages[18][32];
+int pages[18][32] = {0};
+int openFrames[256] = {0};
 struct memoryBlock frames[256];
 
 
@@ -262,6 +264,8 @@ void reciveMessages(){
     }
 
     pid_t requestingPid = message.pid;
+    int requestedPage = message.location / 1024;
+    char readOrWrite = message.readOrWrite;
 
     printf("Parent: Recived msg from child: %d\n", requestingPid);
 
@@ -271,6 +275,52 @@ void reciveMessages(){
         if (openProcesses[j] == requestingPid){
             processLocation = j;
             break;
+        }
+    }
+
+    if (pages[processLocation][requestedPage] == 0){
+        int j;
+        int openFrame = -1;
+        for(j = 0; j < 256; j++){
+            if (openFrames[j] == 0){
+                openFrame = j;
+                break;
+            }
+        }
+        if (openFrame < 0){
+            //page fault add to memeory
+            printf("Process %d requested to read page %d, there was a page fault and no room in frame\n", requestingPid, requestedPage);
+            return;
+        }
+
+        if (readOrWrite == 'w'){
+            pages[processLocation][requestedPage] = openFrame;
+            struct memoryBlock newBlock;
+            newBlock.dirtyBit = 0;
+            newBlock.pid = requestingPid;
+            newBlock.readBit = 0;
+            newBlock.refrenceBit = 0;
+            newBlock.writeBit = 0;
+            frames[openFrame] = newBlock;
+            openFrames[j] = 1;    
+            printf("Process %d created and wrote to page %d\n", requestingPid, requestedPage);
+        } else {
+            printf("Process %d requested to read page %d, however that page does not exist\n", requestingPid, requestedPage);
+        }
+    } else {
+        if (readOrWrite == 'w'){
+            int blockInFrame = pages[processLocation][requestedPage];
+            struct memoryBlock block = frames[blockInFrame];
+            block.dirtyBit = 0;
+            block.pid = requestingPid;
+            block.readBit = 0;
+            block.refrenceBit = 0;
+            block.writeBit = 0;
+            printf("Process %d wrote to existing page %d\n", requestingPid, requestedPage);
+        } else {
+            int blockInFrame = pages[processLocation][requestedPage];
+            struct memoryBlock block = frames[blockInFrame];
+            printf("Process %d read from page %d\n", requestingPid, requestedPage);
         }
     }
 

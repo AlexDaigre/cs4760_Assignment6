@@ -44,7 +44,7 @@ int main (int argc, char *argv[]) {
     // for(;;){
         message.mtype = 1;
         message.readOrWrite = (rand() % 2) == 0 ? 'r' : 'w';
-        message.location = rand() % 32;
+        message.location = rand() % 32768;
         message.pid = getpid();
         int msgSent = msgsnd(msgQueueId, &message, sizeof(message), 0);
         if (msgSent < 0){
