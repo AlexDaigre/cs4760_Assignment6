@@ -38,7 +38,7 @@ int main (int argc, char *argv[]) {
     signal(SIGINT, closeProgramSignal);
     srand ( time(NULL) );
 
-    setupSharedClock();
+    // setupSharedClock();
     setupMsgQueue();
 
     // for(;;){
@@ -81,7 +81,7 @@ void setupSharedClock(){
         exit(1);
     }
 
-    clockShmId = shmget(sharedClockKey, sizeof(int)*2, IPC_CREAT | 0666);
+    clockShmId = shmget(sharedClockKey, sizeof(int)*2, IPC_CREAT | 0777);
     if (clockShmId < 0) {
         printf("shmget error in child: setupSharedClock\n");
         printf("Error: %d\n", errno);
@@ -99,7 +99,7 @@ void setupSharedClock(){
 
 void setupMsgQueue(){
     key_t msgQueueKey;
-    if (-1 != open(QUEUENAME, O_CREAT, 0666)) {
+    if (-1 != open(QUEUENAME, O_CREAT, 0777)) {
         msgQueueKey = ftok(SHMNAME, QUEUEVAR);
     } else {
         printf("ftok error in child: setupMsgQueue\n");
@@ -107,7 +107,7 @@ void setupMsgQueue(){
         exit(1);
     }
 
-    msgQueueId = msgget(msgQueueKey, 0666 |IPC_CREAT);
+    msgQueueId = msgget(msgQueueKey, 0777 |IPC_CREAT);
     if (msgQueueId < 0) {
         printf("msgget error in child: setupMsgQueue\n");
         printf("Error: %d\n", errno);

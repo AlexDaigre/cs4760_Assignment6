@@ -118,7 +118,7 @@ int main (int argc, char *argv[]) {
 
     setupMsgQueue();
 
-    while(clockShmPtr[0] < 80){
+    while(clockShmPtr[0] < 1){
     // while(1==1){
         if ((currentProcesses < maxProcesses)){
             createProcesses();
@@ -153,10 +153,10 @@ void closeProgramSignal(int sig){
 }
 
 void closeProgram(){
+    msgctl(msgQueueId, IPC_RMID, NULL);
     shmctl(clockShmId, IPC_RMID, NULL);
     // shmdt(clockShmPtr);
     fclose(outputFile);
-    msgctl(msgQueueId, IPC_RMID, NULL);
     int i;
     for(i = 0; i < 18; i++){
         if (openProcesses[i] != 0){
@@ -241,7 +241,7 @@ void createProcesses(){
 
 void setupMsgQueue(){
     key_t msgQueueKey;
-    if (-1 != open(QUEUENAME, O_CREAT, 0666)) {
+    if (-1 != open(QUEUENAME, O_CREAT, 0777)) {
         msgQueueKey = ftok(SHMNAME, QUEUEVAR);
     } else {
         printf("ftok error in parrent: setupMsgQueue\n");
@@ -249,7 +249,7 @@ void setupMsgQueue(){
         exit(1);
     }
 
-    msgQueueId = msgget(msgQueueKey, (IPC_CREAT | 0666));
+    msgQueueId = msgget(msgQueueKey, (IPC_CREAT | 0777));
     if (msgQueueId < 0) {
         printf("msgget error in parrent: setupSharedClock\n");
         printf("Error: %d\n", errno);
@@ -296,11 +296,11 @@ void reciveMessages(){
         if (readOrWrite == 'w'){
             pages[processLocation][requestedPage] = openFrame;
             struct memoryBlock newBlock;
-            newBlock.dirtyBit = 0;
+            newBlock.dirtyBit = 1;
             newBlock.pid = requestingPid;
             newBlock.readBit = 0;
             newBlock.refrenceBit = 0;
-            newBlock.writeBit = 0;
+            newBlock.writeBit = 1;
             frames[openFrame] = newBlock;
             openFrames[j] = 1;    
             printf("Process %d created and wrote to page %d\n", requestingPid, requestedPage);
@@ -311,15 +311,14 @@ void reciveMessages(){
         if (readOrWrite == 'w'){
             int blockInFrame = pages[processLocation][requestedPage];
             struct memoryBlock block = frames[blockInFrame];
-            block.dirtyBit = 0;
-            block.pid = requestingPid;
-            block.readBit = 0;
-            block.refrenceBit = 0;
-            block.writeBit = 0;
+            block.dirtyBit = 1;
+            block.writeBit = 1;
             printf("Process %d wrote to existing page %d\n", requestingPid, requestedPage);
         } else {
             int blockInFrame = pages[processLocation][requestedPage];
             struct memoryBlock block = frames[blockInFrame];
+            block.dirtyBit = 1;
+            block.readBit = 1;
             printf("Process %d read from page %d\n", requestingPid, requestedPage);
         }
     }
