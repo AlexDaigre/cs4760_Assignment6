@@ -35,8 +35,8 @@ struct mesg_buffer {
 } message;
 
 int main (int argc, char *argv[]) {
-    signal(SIGINT, closeProgramSignal);
     srand ( time(NULL) );
+    signal(SIGINT, closeProgramSignal);
 
     setupSharedClock();
     setupMsgQueue();
@@ -44,7 +44,7 @@ int main (int argc, char *argv[]) {
     // for(;;){
         message.mtype = 1;
         message.readOrWrite = (rand() % 2) == 0 ? 'r' : 'w';
-        message.location = rand() % 32768;
+        message.location = 5;//rand() % 32768;
         message.pid = getpid();
         int msgSent = msgsnd(msgQueueId, &message, sizeof(message), 0);
         if (msgSent < 0){

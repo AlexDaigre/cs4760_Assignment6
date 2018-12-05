@@ -48,7 +48,6 @@ FILE* outputFile;
 
 int currentProcesses;
 pid_t openProcesses[18] = {0};
-pid_t blockedProcesses[18] = {0};
 int maxProcesses;
 
 struct memoryBlock {
@@ -140,6 +139,13 @@ int closeChild(){
         int i;
         for(i = 0; i < 18; i++){
             if (openProcesses[i] == closedChild){
+                // int j;
+                // for (j = 0; j < 32; j++){
+                //     if (pages[i][j] > 0){
+                //         openFrames[pages[i][j]] = 0;
+                //         pages[i][j] = 0;
+                //     }
+                // }
                 openProcesses[i] = 0;
             }
         }
