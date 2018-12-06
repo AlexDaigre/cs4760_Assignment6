@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <sys/ipc.h> 
 #include <sys/msg.h>
+#include "queue.c"
 
 void childClosedSignal(int sig);
 int closeChild();
@@ -64,6 +65,10 @@ int openFrames[256] = {0};
 struct memoryBlock frames[256];
 
 int createNextProcessAt = -1;
+
+int freeFrameSpace();
+
+struct Queue* pageQueue;
 
 int main (int argc, char *argv[]) {
     srand ( time(NULL) );
@@ -118,6 +123,8 @@ int main (int argc, char *argv[]) {
     clockShmPtr[1] = 0;
 
     setupMsgQueue();
+
+    pageQueue = createQueue(256);
 
     while(clockShmPtr[0] < 1){
     // while(1==1){
@@ -289,6 +296,7 @@ void reciveMessages(){
     }
 
     if (pages[processLocation][requestedPage] == 0){
+        printf("Process %d requested to read page %d, there was a page fault\n", requestingPid, requestedPage);
         int j;
         int openFrame = -1;
         for(j = 0; j < 256; j++){
@@ -298,9 +306,9 @@ void reciveMessages(){
             }
         }
         if (openFrame < 0){
+            printf("Frame is full, freeing a frame.");
             //page fault add to memeory
-            printf("Process %d requested to read page %d, there was a page fault and no room in frame\n", requestingPid, requestedPage);
-            return;
+            openFrame = freeFrameSpace();
         }
 
         if (readOrWrite == 'w'){
@@ -309,10 +317,11 @@ void reciveMessages(){
             newBlock.dirtyBit = 1;
             newBlock.pid = requestingPid;
             newBlock.readBit = 0;
-            newBlock.refrenceBit = 0;
+            newBlock.refrenceBit = 1;
             newBlock.writeBit = 1;
             frames[openFrame] = newBlock;
-            openFrames[j] = 1;    
+            openFrames[j] = 1;
+            enqueue(pageQueue, openFrame);
             printf("Process %d created and wrote to page %d\n", requestingPid, requestedPage);
         } else {
             printf("Process %d requested to read page %d, however that page does not exist\n", requestingPid, requestedPage);
@@ -323,12 +332,14 @@ void reciveMessages(){
             struct memoryBlock block = frames[blockInFrame];
             block.dirtyBit = 1;
             block.writeBit = 1;
+            block.refrenceBit = 1;
             printf("Process %d wrote to existing page %d\n", requestingPid, requestedPage);
         } else {
             int blockInFrame = pages[processLocation][requestedPage];
             struct memoryBlock block = frames[blockInFrame];
             block.dirtyBit = 1;
             block.readBit = 1;
+            block.refrenceBit = 1;
             printf("Process %d read from page %d\n", requestingPid, requestedPage);
         }
     }
@@ -340,4 +351,21 @@ void reciveMessages(){
         printf("Parrent: failed to send message.\n");
     }
     printf("Parent: sent msg to child %d\n", requestingPid);
+}
+
+int freeFrameSpace(){
+    for (;;){
+        int cannidateForDeletion = front(pageQueue);
+
+        if (frames[cannidateForDeletion].refrenceBit == 0){
+            openFrames[cannidateForDeletion] = 0;
+            dequeue(pageQueue);
+            printf("Dealocated frame %d.", cannidateForDeletion);
+            return cannidateForDeletion;
+        } else {
+            frames[cannidateForDeletion].refrenceBit = 0;
+            dequeue(pageQueue);
+            enqueue(pageQueue, cannidateForDeletion);
+        }
+    }
 }

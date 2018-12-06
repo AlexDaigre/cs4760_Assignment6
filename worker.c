@@ -42,7 +42,7 @@ int main (int argc, char *argv[]) {
     setupMsgQueue();
 
     int i;
-    for(i = 0; i < 10; i++){
+    for(i = 0; i < 100; i++){
         message.mtype = 1;
         message.readOrWrite = (rand() % 2) == 0 ? 'r' : 'w';
         message.location = rand() % 32768;
