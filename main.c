@@ -60,9 +60,10 @@ struct memoryBlock {
     int writeBit;
 };
 
+#define totalFrames 10
 int pages[18][32] = {0};
-int openFrames[256] = {0};
-struct memoryBlock frames[256];
+int openFrames[totalFrames] = {0};
+struct memoryBlock frames[totalFrames];
 
 int createNextProcessAt = -1;
 
@@ -124,7 +125,7 @@ int main (int argc, char *argv[]) {
 
     setupMsgQueue();
 
-    pageQueue = createQueue(256);
+    pageQueue = createQueue(totalFrames);
 
     while(clockShmPtr[0] < 1){
     // while(1==1){
@@ -302,7 +303,7 @@ void reciveMessages(){
         fprintf(outputFile, "Parrent: Page %d is not in a frame: pagefault.\n", requestedPage);
         int j;
         int openFrame = -1;
-        for(j = 0; j < 256; j++){
+        for(j = 0; j < totalFrames; j++){
             if (openFrames[j] == 0){
                 openFrame = j;
                 printf("Parrent: Frame %d is open, page %d will be loaded here.\n", openFrame, requestedPage);
