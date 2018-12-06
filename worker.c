@@ -41,7 +41,8 @@ int main (int argc, char *argv[]) {
     // setupSharedClock();
     setupMsgQueue();
 
-    // for(;;){
+    int i;
+    for(i = 0; i < 10; i++){
         message.mtype = 1;
         message.readOrWrite = (rand() % 2) == 0 ? 'r' : 'w';
         message.location = rand() % 32768;
@@ -54,7 +55,7 @@ int main (int argc, char *argv[]) {
         }
 
         msgrcv(msgQueueId, &message, sizeof(message), getpid(), 0);
-    // }
+    }
 
     // printf("Child %d: an error has occured.", getpid());
     printf("Child %d: Recived permission to close\n.", getpid());

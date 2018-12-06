@@ -63,6 +63,7 @@ int pages[18][32] = {0};
 int openFrames[256] = {0};
 struct memoryBlock frames[256];
 
+int createNextProcessAt = -1;
 
 int main (int argc, char *argv[]) {
     srand ( time(NULL) );
@@ -217,26 +218,35 @@ void advanceTime(){
 }
 
 void createProcesses(){
-    int i;
-    int openSpace;
-    for(i = 0; i < 18; i++){
-        if (openProcesses[i] == 0){
-            openSpace = i;
-            break;
+    if (createNextProcessAt < 0){
+        int randNumber = 1000;
+        createNextProcessAt = randNumber + clockShmPtr[1];
+        // printf("next process at %d seconds\n", createNextProcessAt);
+    }
+
+    if ((clockShmPtr[1] > createNextProcessAt) && (createNextProcessAt > 0)){
+        int i;
+        int openSpace;
+        for(i = 0; i < 18; i++){
+            if (openProcesses[i] == 0){
+                openSpace = i;
+                break;
+            }
         }
+        pid_t newForkPid;
+        newForkPid = fork();
+        if (newForkPid == 0){
+            execlp("./worker","./worker", NULL);
+            fprintf(stderr, "Failed to exec worker!\n");
+            fprintf(outputFile, "Failed to exec worker!\n");
+            exit(1);
+        }
+        openProcesses[openSpace] = newForkPid;
+        createNextProcessAt = -1;
+        printf("Execed child %d\n", openProcesses[openSpace]);
+        fprintf(outputFile, "Execed child %d\n", openProcesses[openSpace]);
+        currentProcesses++;
     }
-    pid_t newForkPid;
-    newForkPid = fork();
-    if (newForkPid == 0){
-        execlp("./worker","./worker", NULL);
-        fprintf(stderr, "Failed to exec worker!\n");
-        fprintf(outputFile, "Failed to exec worker!\n");
-        exit(1);
-    }
-    openProcesses[openSpace] = newForkPid;
-    printf("Execed child %d\n", newForkPid);
-    fprintf(outputFile, "Execed child %d\n", newForkPid);
-    currentProcesses++;
 }
 
 void setupMsgQueue(){
