@@ -281,10 +281,12 @@ void reciveMessages(){
     }
 
     pid_t requestingPid = message.pid;
-    int requestedPage = message.location / 1024;
+    int requestedAddress = message.location;
+    int requestedPage = requestedAddress / 1024;
     char readOrWrite = message.readOrWrite;
 
-    printf("Parent: Recived msg from child: %d\n", requestingPid);
+    printf("Parent: %d requested read of Address %d / page %d at %d:%d\n", requestingPid, requestedAddress, requestedPage, clockShmPtr[0], clockShmPtr[1]);
+    fprintf(outputFile, "Parent: %d requested read of Address %d / page %d at %d:%d\n", requestingPid, requestedAddress, requestedPage, clockShmPtr[0], clockShmPtr[1]);
 
     int j;
     int processLocation;
@@ -296,19 +298,22 @@ void reciveMessages(){
     }
 
     if (pages[processLocation][requestedPage] == 0){
-        printf("Process %d requested to read page %d, there was a page fault\n", requestingPid, requestedPage);
+        printf("Parrent: Page %d is not in a frame: pagefault.\n", requestedPage);
+        fprintf(outputFile, "Parrent: Page %d is not in a frame: pagefault.\n", requestedPage);
         int j;
         int openFrame = -1;
         for(j = 0; j < 256; j++){
             if (openFrames[j] == 0){
                 openFrame = j;
+                printf("Parrent: Frame %d is open, page %d will be loaded here.\n", openFrame, requestedPage);
+                fprintf(outputFile, "Parrent: Frame %d is open, page %d will be loaded here.\n", openFrame, requestedPage);
                 break;
             }
         }
         if (openFrame < 0){
-            printf("Frame is full, freeing a frame.");
-            //page fault add to memeory
             openFrame = freeFrameSpace();
+            printf("Parrent: Cleared frame %d, page %d will be loaded here.\n", openFrame, requestedPage);
+            fprintf(outputFile, "Parrent: Cleared frame %d is open, page %d will be loaded here.\n", openFrame, requestedPage);
         }
 
         if (readOrWrite == 'w'){
@@ -320,11 +325,23 @@ void reciveMessages(){
             newBlock.refrenceBit = 1;
             newBlock.writeBit = 1;
             frames[openFrame] = newBlock;
-            openFrames[j] = 1;
+            openFrames[openFrame] = 1;
             enqueue(pageQueue, openFrame);
-            printf("Process %d created and wrote to page %d\n", requestingPid, requestedPage);
+            printf("Parrent: Process %d wrote to page %d: now in frame %d.\n", requestingPid, requestedPage, openFrame);
+            fprintf(outputFile, "Parrent: Process %d wrote to page %d: now in frame %d.\n", requestingPid, requestedPage, openFrame);
         } else {
-            printf("Process %d requested to read page %d, however that page does not exist\n", requestingPid, requestedPage);
+            pages[processLocation][requestedPage] = openFrame;
+            struct memoryBlock newBlock;
+            newBlock.dirtyBit = 1;
+            newBlock.pid = requestingPid;
+            newBlock.readBit = 1;
+            newBlock.refrenceBit = 1;
+            newBlock.writeBit = 0;
+            frames[openFrame] = newBlock;
+            openFrames[openFrame] = 1;
+            enqueue(pageQueue, openFrame);
+            printf("Parrent: Process %d read from page %d: now in frame %d.\n", requestingPid, requestedPage, openFrame);
+            fprintf(outputFile, "Parrent: Process %d read from page %d: now in frame %d.\n", requestingPid, requestedPage, openFrame);
         }
     } else {
         if (readOrWrite == 'w'){
@@ -333,14 +350,16 @@ void reciveMessages(){
             block.dirtyBit = 1;
             block.writeBit = 1;
             block.refrenceBit = 1;
-            printf("Process %d wrote to existing page %d\n", requestingPid, requestedPage);
+            printf("Parrent: Process %d wrote to page %d: already in frame %d.\n", requestingPid, requestedPage, blockInFrame);
+            fprintf(outputFile, "Parrent: Process %d wrote to page %d: already in frame %d.\n", requestingPid, requestedPage, blockInFrame);
         } else {
             int blockInFrame = pages[processLocation][requestedPage];
             struct memoryBlock block = frames[blockInFrame];
             block.dirtyBit = 1;
             block.readBit = 1;
             block.refrenceBit = 1;
-            printf("Process %d read from page %d\n", requestingPid, requestedPage);
+            printf("Parrent: Process %d read from page %d: already in frame %d.\n", requestingPid, requestedPage, blockInFrame);
+            fprintf(outputFile, "Parrent: Process %d read from page %d: already in frame %d.\n", requestingPid, requestedPage, blockInFrame);
         }
     }
 
@@ -350,22 +369,27 @@ void reciveMessages(){
     if (msgSent < 0){
         printf("Parrent: failed to send message.\n");
     }
-    printf("Parent: sent msg to child %d\n", requestingPid);
+    printf("Parent: sent msg to child %d indicating requested action was taken.\n", requestingPid);
+    fprintf(outputFile, "Parent: sent msg to child %d indicating requested action was taken.\n", requestingPid);
 }
 
 int freeFrameSpace(){
     for (;;){
         int cannidateForDeletion = front(pageQueue);
 
-        if (frames[cannidateForDeletion].refrenceBit == 0){
+        if (frames[cannidateForDeletion].refrenceBit == 0 && frames[cannidateForDeletion].dirtyBit == 0){
             openFrames[cannidateForDeletion] = 0;
             dequeue(pageQueue);
-            printf("Dealocated frame %d.", cannidateForDeletion);
+            printf("Parrent: Dealocated frame %d.\n", cannidateForDeletion);
+            fprintf(outputFile, "Parrent: Dealocated frame %d.\n", cannidateForDeletion);
             return cannidateForDeletion;
         } else {
             frames[cannidateForDeletion].refrenceBit = 0;
+            frames[cannidateForDeletion].dirtyBit = 0;
             dequeue(pageQueue);
             enqueue(pageQueue, cannidateForDeletion);
+            printf("Parrent: Frame %d granted second chance.\n", cannidateForDeletion);
+            fprintf(outputFile, "Parrent: Frame %d granted second chance.\n", cannidateForDeletion);
         }
     }
 }

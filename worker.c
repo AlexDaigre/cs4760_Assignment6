@@ -58,7 +58,7 @@ int main (int argc, char *argv[]) {
     }
 
     // printf("Child %d: an error has occured.", getpid());
-    printf("Child %d: Recived permission to close\n.", getpid());
+    // printf("Child %d: Recived permission to close\n.", getpid());
     closeProgram();
 }
 
@@ -68,7 +68,7 @@ void closeProgramSignal(int sig){
 
 void closeProgram(){
     shmdt(clockShmPtr);
-    printf("Child %d Exiting gracefully.\n", getpid());
+    // printf("Child %d Exiting gracefully.\n", getpid());
     exit(0);
 }
 
